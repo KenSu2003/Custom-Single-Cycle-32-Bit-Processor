@@ -1,41 +1,38 @@
+# Simulation starting...
+# Reset released, starting program execution
+# Time                90000: PC=1 Instr=28400005
+#   Write observed: REG r1 <= 0x00000005
+# [TB][90000] Reg write observed: r1 <= 0x00000005
+# Time               110000: PC=2 Instr=28800005
+#   Write observed: REG r1 <= 0x00000005
+# [TB][110000] Reg write observed: r1 <= 0x00000005
+# Time               130000: PC=3 Instr=10440001
+#   Write observed: REG r2 <= 0x00000005
+# [TB][130000] Reg write observed: r2 <= 0x00000005
+# Time               150000: PC=4 Instr=28c00063
+# Time               170000: PC=6 Instr=00000000
+#   Write observed: REG r3 <= 0x00000063
+# [TB][170000] Reg write observed: r3 <= 0x00000063
+# Time               190000: PC=7 Instr=2901ffff
+# Time               210000: PC=8 Instr=31060001
+#   Write observed: REG r4 <= 0xffffffff
+# [TB][210000] Reg write observed: r4 <= 0xffffffff
+# Time               230000: PC=9 Instr=29400000
+# Time               250000: PC=10 Instr=00000000
+#   Write observed: REG r5 <= 0x00000000
+# [TB][250000] Reg write observed: r5 <= 0x00000000
+# Time               270000: PC=11 Instr=29400003
+# Time               290000: PC=12 Instr=00000000
+#   Write observed: REG r5 <= 0x00000003
+# [TB][290000] Reg write observed: r5 <= 0x00000003
+# Time               310000: PC=13 Instr=00000000
+# Time               330000: PC=14 Instr=00000000
+# Time               350000: PC=15 Instr=00000000
+
 # --- Running automated checks ---
 # Checking registers 1..31 and selected memory locations...
-# PASS: r1 == 0x00000007
-# FAIL: r2 expected 0x00000015 observed 0x00000008
-# FAIL: r3 expected 0xfffffffb observed 0xfffffffe
-# FAIL: r4 expected 0x00000000 observed 0x00000003
-# FAIL: r5 was never observed written (observed value 0x00000000)
-# FAIL: r6 was never observed written (observed value 0x00000000)
-# FAIL: r7 was never observed written (observed value 0x00000000)
-# FAIL: r8 was never observed written (observed value 0x00000000)
-# FAIL: r9 was never observed written (observed value 0x00000000)
-# FAIL: r10 was never observed written (observed value 0x00000000)
-# FAIL: r11 was never observed written (observed value 0x00000000)
-# FAIL: r12 was never observed written (observed value 0x00000000)
-# FAIL: r13 was never observed written (observed value 0x00000000)
-# FAIL: r14 was never observed written (observed value 0x00000000)
-# FAIL: r15 was never observed written (observed value 0x00000000)
-# FAIL: r16 was never observed written (observed value 0x00000000)
-# FAIL: r17 was never observed written (observed value 0x00000000)
-# FAIL: r18 was never observed written (observed value 0x00000000)
-# FAIL: r19 was never observed written (observed value 0x00000000)
-# FAIL: r20 was never observed written (observed value 0x00000000)
-# FAIL: r21 was never observed written (observed value 0x00000000)
-# FAIL: r22 was never observed written (observed value 0x00000000)
-# FAIL: r23 was never observed written (observed value 0x00000000)
-# FAIL: r24 was never observed written (observed value 0x00000000)
-# FAIL: r25 was never observed written (observed value 0x00000000)
-# FAIL: r26 was never observed written (observed value 0x00000000)
-# FAIL: r27 was never observed written (observed value 0x00000000)
-# FAIL: r28 expected 0x00000004 observed 0x00000001
-# FAIL: r29 was never observed written (observed value 0x00000000)
-# FAIL: r30 was never observed written (observed value 0x00000000)
-# FAIL: r31 expected 0x00000002 observed 0x00000063
-# FAIL: MEM[99] was never written (observed 0xdeadbeef)
-# FAIL: MEM[100] was never written (observed 0xdeadbeef)
-# FAIL: MEM[101] was never written (observed 0xdeadbeef)
-# FAIL: MEM[102] was never written (observed 0xdeadbeef)
-# FAIL: MEM[103] was never written (observed 0xdeadbeef)
-# FAIL: MEM[105] was never written (observed 0xdeadbeef)
-# FAIL: MEM[107] was never written (observed 0xdeadbeef)
-# FAIL: MEM[111] was never written (observed 0xdeadbeef)
+# PASS: r1 == 0x00000005
+# PASS: r2 == 0x00000005
+# FAIL: r3 expected 0x00000007 observed 0x00000063
+# PASS: r4 == 0xffffffff
+# PASS: r5 == 0x00000003

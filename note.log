@@ -1,1 +1,3 @@
-It seems that PC=5 and PC=6 are not printing out.
+extreme_test no long works
+
+branch uses instr and imem = CLOCK0

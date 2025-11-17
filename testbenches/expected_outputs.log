@@ -1,0 +1,149 @@
+// branch.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000007;    // $1 = 7
+expected_reg[2]  = 32'h00000008;    // $2 = 8
+expected_reg[3]  = 32'hFFFFFFFE;    // $3 = -2
+expected_reg[4]  = 32'h00000003;    // $4 = 3
+expected_reg[28] = 32'h00000001;    // $28 = 1 (BLT marker)
+expected_reg[31] = 32'h00000002;    // $31 = 2 (BNE marker)
+
+// branch_complete.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000005;    // $1 = 5
+expected_reg[2]  = 32'h00000005;    // $2 = 5
+expected_reg[3]  = 32'h00000063;    // $3 = 99
+expected_reg[4]  = 32'hFFFFFFFF;    // $4 = -1 (0xFFFFFFFF)
+expected_reg[5]  = 32'h00000003;    // $5 = 3
+
+
+// branch_extreme.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'hFFFFFFFF;    // $1 = -1
+expected_reg[2]  = 32'h00000000;    // $2 = 0
+expected_reg[10] = 32'h00000005;    // $10 = 5
+
+// jump.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000001;    // $1 = 1
+expected_reg[2]  = 32'h00000002;    // $2 = 2
+expected_reg[3]  = 32'h00000003;    // $3 = 3
+expected_reg[31] = 32'h00000002;    // $31 = 2  (jal saved PC+1)
+
+// jump_complete.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000001;    // $1 = 1
+expected_reg[30] = 32'h00000005;    // $30 (rstatus) = 5 (set by setx)
+
+// jump_extreme.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000001;    // $1 = 1
+expected_reg[2]  = 32'h00000002;    // $2 = 2
+expected_reg[4]  = 32'h00000005;    // $4 = 5 (jr target)
+
+// branch_jump.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000007;    // $1 = 7
+expected_reg[2]  = 32'h00000008;    // $2 = 8
+expected_reg[3]  = 32'hFFFFFFFB;    // $3 = -5
+expected_reg[5]  = 32'h00000009;    // $5 = 9 (after return marker)
+expected_reg[28] = 32'h00000004;    // $28 = 4 (BLT marker)
+expected_reg[31] = 32'h00000003;    // $31 = 3 (jal saved return PC+1)
+
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h0000000B;
+expected_reg[2]  = 32'h00000002;
+expected_reg[3]  = 32'hFFFFFFFB;
+expected_reg[4]  = 32'h00000004;
+expected_reg[5]  = 32'h00000000;
+expected_reg[6]  = 32'h00000006;
+expected_reg[7]  = 32'h0000004D;
+expected_reg[8]  = 32'h00000015;
+expected_reg[9]  = 32'h0000000F;
+expected_reg[10] = 32'h00000004;
+expected_reg[11] = 32'hFFFFFFFC;
+expected_reg[12] = 32'h00000001;
+expected_reg[13] = 32'h00000010;
+expected_reg[14] = 32'hFFFFFFFB;
+expected_reg[15] = 32'hFFFFFFFC;
+expected_reg[16] = 32'h0000000B;
+expected_reg[17] = 32'h000003E7;
+expected_reg[18] = 32'h000003E7;
+expected_reg[19] = 32'h000003FB;
+expected_reg[20] = 32'h40000000;
+expected_reg[21] = 32'h00000014;
+expected_reg[22] = 32'h0000000F;
+expected_reg[23] = 32'h7FFFFFFF;
+expected_reg[24] = 32'h0000FFFF;
+expected_reg[25] = 32'hFFFF0000;
+expected_reg[26] = 32'h00000007;
+expected_reg[27] = 32'h00000007;
+expected_reg[28] = 32'h00000004;
+expected_reg[29] = 32'h80000000;
+expected_reg[30] = 32'h0000002A;  // rstatus (set by setx 0x2A earlier)
+expected_reg[31] = 32'h00000041;  // $ra saved by jal (decimal 65)
+
+expected_mem_arr[99]  = 32'h00000007;    // MEM[$5 - 1]
+expected_mem_arr[100] = 32'h00000007;    // MEM[$5 + 0]
+expected_mem_arr[101] = 32'h00000014;    // MEM[$5 + 1]
+expected_mem_arr[102] = 32'h0000000F;    // MEM[$5 + 2]
+expected_mem_arr[103] = 32'h00000014;    // MEM[$5 + 3]
+expected_mem_arr[105] = 32'hFFFFFFFB;    // MEM[$5 + 5] = r3 (-5)
+expected_mem_arr[107] = 32'h00000015;    // MEM[$5 + 7] = r2 (21)
+expected_mem_arr[111] = 32'h000003E7;    // MEM[$5 + 11] = 999
+
+// jump_suite.s expected register values
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000001;    // from Part 1 (j test)
+expected_reg[2]  = 32'h00000002;    // from Part 1 target
+expected_reg[3]  = 32'h00000003;    // from Part 2 setup
+expected_reg[4]  = 32'h00000004;    // set in FUNC
+expected_reg[5]  = 32'h00000005;    // executed after jr return
+expected_reg[6]  = 32'h00000006;    // from bex taken branch
+expected_reg[7]  = 32'h00000007;    // from bex not taken branch
+expected_reg[30] = 32'h00000000;    // rstatus cleared at end
+expected_reg[31] = 32'h00000009;    // jal return address (PC+1)
+
+
+
+// extreme_test.s
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000007;    // $1 = 7
+expected_reg[2]  = 32'h00000008;    // $2 = 8
+expected_reg[3]  = 32'hFFFFFFFE;    // $3 = -2
+expected_reg[4]  = 32'h00000003;    // $4 = 3
+expected_reg[5]  = 32'h00000064;    // $5 = 100
+expected_reg[6]  = 32'h00000014;    // $6 = 20
+expected_reg[7]  = 32'h00000014;    // $7 = 20 (loaded from MEM[103])
+expected_reg[8]  = 32'h00000015;    // $8 = 21 (loaded from MEM[107])
+expected_reg[9]  = 32'h0000000F;    // $9 = 15
+expected_reg[10] = 32'h00000004;    // $10 = 4
+expected_reg[11] = 32'hFFFFFFFC;    // $11 = -4
+expected_reg[12] = 32'h00000001;    // $12 = 1
+expected_reg[13] = 32'h00000010;    // $13 = 16
+expected_reg[14] = 32'hFFFFFFFB;    // $14 = -5 (loaded from MEM[105])
+expected_reg[15] = 32'hFFFFFFFC;    // $15 = -4
+expected_reg[16] = 32'h0000000B;    // $16 = 11
+expected_reg[17] = 32'h000003E7;    // $17 = 999
+expected_reg[18] = 32'h000003E7;    // $18 = 999 (loaded)
+expected_reg[19] = 32'h000003FB;    // $19 = 1019
+expected_reg[20] = 32'h40000000;    // $20 = 1 << 30
+expected_reg[21] = 32'h00000014;    // $21 = 20 (loaded from MEM[101])
+expected_reg[22] = 32'h0000000F;    // $22 = 15 (loaded from MEM[102])
+expected_reg[23] = 32'h7FFFFFFF;    // $23 = 0x7FFFFFFF (sub overflow result)
+expected_reg[24] = 32'h0000FFFF;    // $24 = 65535
+expected_reg[25] = 32'hFFFF0000;    // $25 = -65536
+expected_reg[26] = 32'h00000007;    // $26 = 7 (loaded from MEM[100])
+expected_reg[27] = 32'h00000007;    // $27 = 7 (loaded from MEM[99])
+expected_reg[28] = 32'h00000004;    // $28 = 4 (BLT marker at end)
+expected_reg[29] = 32'h80000000;    // $29 = 1 << 31
+expected_reg[30] = 32'h00000002;    // $30 = rstatus final (addi overflow -> 2)
+expected_reg[31] = 32'h00000002;    // $31 = 2 (set by branch_bne_pass)
+
+expected_mem_arr[ 99] = 32'h00000007;    // MEM[$5 - 1]
+expected_mem_arr[100] = 32'h00000007;    // MEM[$5 + 0]
+expected_mem_arr[101] = 32'h00000014;    // MEM[$5 + 1]
+expected_mem_arr[102] = 32'h0000000F;    // MEM[$5 + 2]
+expected_mem_arr[103] = 32'h00000014;    // MEM[$5 + 3]
+expected_mem_arr[105] = 32'hFFFFFFFB;    // MEM[$5 + 5] = r3 (-5)
+expected_mem_arr[107] = 32'h00000015;    // MEM[$5 + 7] = r2 (21)
+expected_mem_arr[111] = 32'h000003E7;    // MEM[$5 + 11] = 999

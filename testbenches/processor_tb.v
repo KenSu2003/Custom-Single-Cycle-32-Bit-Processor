@@ -128,12 +128,12 @@ module processor_tb();
         for (i = 0; i < 32; i = i + 1) expected_reg[i] = 32'h00000000;
         for (i = 0; i < DMEM_SHADOW_SIZE; i = i + 1) expected_mem_arr[i] = 32'h00000000;
 
-                // Registers from the provided assembly (final expected values)
+        // Registers from the provided assembly (final expected values)
         expected_reg[0]  = 32'h00000000;
         expected_reg[1]  = 32'h00000007;    // $1 = 7
         expected_reg[2]  = 32'h00000015;    // $2 final = 21 (updated later)
         expected_reg[3]  = 32'hFFFFFFFB;    // -5
-        expected_reg[4]  = 32'h00000000;
+        expected_reg[4]  = 32'h00000003;    // $4 = 3 (set by addi $4,$0,3 near end)
         expected_reg[5]  = 32'h00000064;    // 100
         expected_reg[6]  = 32'h00000014;    // 20
         expected_reg[7]  = 32'h00000014;    // overwritten by lw -> 20
@@ -152,7 +152,7 @@ module processor_tb();
         expected_reg[20] = 32'h40000000;    // 1 << 30
         expected_reg[21] = 32'h00000014;    // loaded later from MEM[101] -> 20
         expected_reg[22] = 32'h0000000F;    // loaded later from MEM[102] -> 15
-        expected_reg[23] = 32'h00000000;    // not written due to overflow exception
+        expected_reg[23] = 32'h7FFFFFFF;    // sub overflow result (0x80000000 - 1)
         expected_reg[24] = 32'h0000FFFF;    // 65535
         expected_reg[25] = 32'hFFFF0000;    // -65536
         expected_reg[26] = 32'h00000007;    // 7 (from MEM[100])
@@ -171,6 +171,7 @@ module processor_tb();
         expected_mem_arr[105] = 32'hFFFFFFFB;    // MEM[$5 + 5] = r3 (-5)
         expected_mem_arr[107] = 32'h00000015;    // MEM[$5 + 7] = r2 (21)
         expected_mem_arr[111] = 32'h000003E7;    // MEM[$5 + 11] = 999
+
 
 
         $display("\n--- Running automated checks ---");
