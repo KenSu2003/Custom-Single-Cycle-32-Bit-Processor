@@ -141,12 +141,12 @@ module processor(
 
     // ************** Jump Mux **************
     wire [11:0] jump_target;   
-    wire j_func;
+    wire isJumpTarget;
     mux_2_1 jump_mux (
         .out(pc_next),
         .a(branch_or_pc_plus_1),
         .b(jump_target),
-        .s(j_func)            // 1 if 'j' instruction
+        .s(isJumpTarget)            // 1 if 'j' instruction
     );
 
 
@@ -313,8 +313,10 @@ module processor(
     or checkBranch (isBranch, bne_func, blt_func);
 
     // J-type
+    wire j_func, jal_func;
     and j_check (j_func, ~opcode[4], ~opcode[3], ~opcode[2], ~opcode[1], opcode[0]);        // j: opcode == 00001
-
+    and jal_check  (jal_func, ~opcode[4], ~opcode[3], ~opcode[2], opcode[1], opcode[0]);        // j: opcode == 00001
+    assign isJumpTarget = j_func | jal_func;
 
     // Check which operation to use
     wire add_op, sub_op, and_op, or_op, sll_op, sra_op;
@@ -455,8 +457,7 @@ module processor(
         NOTE: Exceptions take precedent when writing to $r30.
     */
     wire [4:0] final_write_reg;
-    assign final_write_reg  = overflow_write_rstatus ? 5'd30 : rd;
-
+    assign final_write_reg  = overflow_write_rstatus ? 5'd30 : (jal_func ? 5'd31 : rd);
 
     /*
         Write Permission
@@ -465,8 +466,7 @@ module processor(
         - when we have an overflow and need to write status to r30
     */
     wire final_write_enable;
-    assign final_write_enable = reg_write | overflow_write_rstatus;
-
+    assign final_write_enable = reg_write | overflow_write_rstatus | jal_func;
 
     /*  DO NOT FORGET THIS PART!
         Check if we're trying to write to register 0
@@ -487,7 +487,6 @@ module processor(
     
 
     // Choose the final data to write
-    assign data_writeReg = overflow_write_rstatus ? rstatus : mem_to_reg_data;
-
+    assign data_writeReg = overflow_write_rstatus ? rstatus : (jal_func ? pc_alu_result : mem_to_reg_data);
 
 endmodule

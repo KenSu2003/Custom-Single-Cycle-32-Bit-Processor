@@ -1,21 +1,39 @@
-# branch_jump.s -- simple branch coverage (bne and blt, taken/not-taken)
+# branch_jump.s -- simple branch coverage (bne, blt, and jal)
 
 # --- BNE CHECK (Not Taken Case: $1 = $2) ---
-addi $1, $0, 5       # $1 = 5
-addi $2, $0, 5       # $2 = 5
+addi $1, $0, 5
+addi $2, $0, 5
 bne  $1, $2, bne_taken
-addi $3, $0, 99         # NOT TAKEN PATH
-j    next_test          # UNCONDITIONAL JUMP to skip the taken path
+addi $3, $0, 99
+j    next_test
 
 bne_taken:
-addi $3, $0, 7       # SKIPPED by the jump above since $1 = $2.
+addi $3, $0, 7
 
 # --- BLT CHECK (Taken Case: $4 < $3) ---
 next_test:
-addi $4, $0, 2      # $4 = 2
-addi $6, $0, 7      # $6 = 7
+addi $4, $0, 2
+addi $6, $0, 7
 blt  $4, $3, blt_pass
-addi $5, $0, 0       #  SKIPPED
+addi $5, $0, 0
 
 blt_pass:
-addi $5, $0, 3       # $5 = 3
+addi $5, $0, 3
+j    jal_test
+
+# --- JAL CHECK (Subroutine Call) ---
+jal_test:
+addi $7, $0, 10
+jal  my_subroutine
+
+after_call:
+add  $9, $8, $0
+j    done
+
+# --- Subroutine Definition ---
+my_subroutine:
+addi $8, $7, 1
+jr   $ra
+
+done:
+nop
