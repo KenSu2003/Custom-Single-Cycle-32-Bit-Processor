@@ -1,4 +1,49 @@
-// branch.s expected register values
+// ——————————————————————— basic_test.s ———————————————————————
+expected_reg[0]  = 32'h00000000;
+expected_reg[1]  = 32'h00000007;    // $1 = 7
+expected_reg[2]  = 32'h00000015;    // $2 final = 21 (updated later)
+expected_reg[3]  = 32'hFFFFFFFB;    // -5
+expected_reg[4]  = 32'h00000000;
+expected_reg[5]  = 32'h00000064;    // 100
+expected_reg[6]  = 32'h00000014;    // 20
+expected_reg[7]  = 32'h00000014;    // overwritten by lw -> 20
+expected_reg[8]  = 32'h00000015;    // overwritten by lw -> 21
+expected_reg[9]  = 32'h0000000F;    // 15
+expected_reg[10] = 32'h00000004;
+expected_reg[11] = 32'hFFFFFFFC;
+expected_reg[12] = 32'h00000001;
+expected_reg[13] = 32'h00000010;
+expected_reg[14] = 32'hFFFFFFFB;    // overwritten by lw from MEM[105] (r3 = -5)
+expected_reg[15] = 32'hFFFFFFFC;
+expected_reg[16] = 32'h0000000B;    // 11
+expected_reg[17] = 32'h000003E7;    // 999
+expected_reg[18] = 32'h000003E7;    // 999 (loaded)
+expected_reg[19] = 32'h000003FB;    // 1019
+expected_reg[20] = 32'h40000000;    // 1 << 30
+expected_reg[21] = 32'h00000014;    // loaded later from MEM[101] -> 20
+expected_reg[22] = 32'h0000000F;    // loaded later from MEM[102] -> 15
+expected_reg[23] = 32'h00000000;    // not written due to overflow exception
+expected_reg[24] = 32'h0000FFFF;    // 65535
+expected_reg[25] = 32'hFFFF0000;    // -65536
+expected_reg[26] = 32'h00000007;    // 7 (from MEM[100])
+expected_reg[27] = 32'h00000007;    // 7 (from MEM[99])
+expected_reg[28] = 32'h7FFFFFFF;    // INT_MAX (set before overflow)
+expected_reg[29] = 32'h80000000;    // 1 << 31
+expected_reg[30] = 32'h00000002;    // rstatus from addi overflow (should be 2)
+expected_reg[31] = 32'h7FFFFFFF;    // INT_MAX (set earlier)
+
+// Memory expectations (word addresses)
+expected_mem_arr[99]  = 32'h00000007;    // MEM[$5 - 1]
+expected_mem_arr[100] = 32'h00000007;    // MEM[$5 + 0]
+expected_mem_arr[101] = 32'h00000014;    // MEM[$5 + 1]
+expected_mem_arr[102] = 32'h0000000F;    // MEM[$5 + 2]
+expected_mem_arr[103] = 32'h00000014;    // MEM[$5 + 3]
+expected_mem_arr[105] = 32'hFFFFFFFB;    // MEM[$5 + 5] = r3 (-5)
+expected_mem_arr[107] = 32'h00000015;    // MEM[$5 + 7] = r2 (21)
+expected_mem_arr[111] = 32'h000003E7;    // MEM[$5 + 11] = 999
+
+// ——————————————————————— branch.s ———————————————————————
+// expected register values
 expected_reg[0]  = 32'h00000000;
 expected_reg[1]  = 32'h00000007;    // $1 = 7
 expected_reg[2]  = 32'h00000008;    // $2 = 8
@@ -7,20 +52,32 @@ expected_reg[4]  = 32'h00000003;    // $4 = 3
 expected_reg[28] = 32'h00000001;    // $28 = 1 (BLT marker)
 expected_reg[31] = 32'h00000002;    // $31 = 2 (BNE marker)
 
-// branch_complete.s expected register values
-expected_reg[0]  = 32'h00000000;
-expected_reg[1]  = 32'h00000005;    // $1 = 5
-expected_reg[2]  = 32'h00000005;    // $2 = 5
-expected_reg[3]  = 32'h00000063;    // $3 = 99
-expected_reg[4]  = 32'hFFFFFFFF;    // $4 = -1 (0xFFFFFFFF)
-expected_reg[5]  = 32'h00000003;    // $5 = 3
+// ——————————————————————— branch_complete.s ———————————————————————
+// expected register values
+expected_reg[1]  = 32'h00000001;    // $1 = 1
+expected_reg[2]  = 32'h00000002;    // $2 = 2
+
+expected_reg[4]  = 32'h00000004;    // $4 = 4
+expected_reg[5]  = 32'hFFFFFFFF;    // $5 = -1
+
+expected_reg[7]  = 32'h00000007;    // $7 = 7
+
+expected_reg[8]  = 32'h00000001;    // $8 = 1
+expected_reg[9]  = 32'h00000001;    // $9 = 1
+expected_reg[10]  = 32'h00000001;    // $10 = 1
 
 
-// branch_extreme.s expected register values
-expected_reg[0]  = 32'h00000000;
-expected_reg[1]  = 32'hFFFFFFFF;    // $1 = -1
-expected_reg[2]  = 32'h00000000;    // $2 = 0
-expected_reg[10] = 32'h00000005;    // $10 = 5
+expected_reg[11]  = 32'h00000002;    // $11 = 2
+expected_reg[12]  = 32'h00000001;    // $12 = 1
+expected_reg[13]  = 32'h00000001;    // $13 = 1
+
+
+
+// ——————————————————————— j_isolated.s ———————————————————————
+// expected register values
+expected_reg[1]  = 32'h00000000;    // $1 = 0
+expected_reg[2]  = 32'h00000001;    // $2 = 1
+
 
 // jump.s expected register values
 expected_reg[0]  = 32'h00000000;
@@ -111,3 +168,5 @@ expected_mem_arr[103] = 32'h00000014;    // MEM[$5 + 3]
 expected_mem_arr[105] = 32'hFFFFFFFB;    // MEM[$5 + 5] = r3 (-5)
 expected_mem_arr[107] = 32'h00000015;    // MEM[$5 + 7] = r2 (21)
 expected_mem_arr[111] = 32'h000003E7;    // MEM[$5 + 11] = 999
+
+

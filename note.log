@@ -1,10 +1,16 @@
-extreme_test no long works
+// Latch fetched instruction on processor clock for stable decode
+genvar j; // Use 'j' to avoid conflict with the existing 'i'
+generate
+    for (j = 0; j < 32; j = j + 1) begin : instr_reg_gen
+        dffe_ref instr_dffe_j (
+            .q(instr[j]),
+            .d(q_imem[j]),
+            .clk(clock),
+            .en(1'b1),
+            .clr(reset)
+        );
+    end
+endgenerate
 
-branch uses instr and imem = CLOCK0
 
-the branch_compelte.s test will end with a 
-r3 <= 0x00000007
-since we did not have jump to skip it
-that's why we have the branch—jump.s file
-
-alui cannot do signed comaprison
+// fixed the i_mem swap issue
