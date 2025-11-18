@@ -121,7 +121,20 @@ module processor(
         .overflow()
     );
     assign pc_plus_1 = pc_alu_result[11:0]; // alu returns 32-bits have to parse to 12-bits
-    
+
+    // ************** Calculate PC+2 for JAL Compensation **************
+    wire [31:0] pc_plus_two_result;
+    alu pc_alu_plus_two (
+        .data_operandA({20'b0, pc}),
+        .data_operandB(32'd2),      // Using +2 to compensate for PC lag
+        .ctrl_ALUopcode(5'b00000),  // Add == 00000
+        .ctrl_shiftamt(5'b00000),
+        .data_result(pc_plus_two_result),
+        .isNotEqual(),
+        .isLessThan(),
+        .overflow()
+    );
+
 
     // ++++++++++++++ Calculate and Select Branch Target ++++++++++++++
     /* Used pc_plus_1 for checkpoint 4 since it doesn't require it.
@@ -140,7 +153,6 @@ module processor(
         .b(branch_target),
         .s(pc_src)              // 1 if bne/blt is taken
     );
-    
     // ************** J/JAL/JR Muxes **************
     // jr_func, is_j_or_jal : ID/EX Stage
     // j_or_jal_target : ID Stage
@@ -154,25 +166,32 @@ module processor(
         .b(j_or_jal_target),
         .s(is_j_or_jal)
     );
-    
-    
     // ************** jr mux **************
     /*
         Selects between (previous result) AND (Register Value)
     */
-    wire jr_func;                               // Assigned in EX stage
-
+    wire jr_func; // Defined in ID Stage
+    wire [11:0] jr_mux_out;
+    // Create intermediate wire
     mux_2_1 jr_mux (
-        .out(pc_next),
+        .out(jr_mux_out),
         .a(jump_mux_out),
         .b(data_readRegA[11:0]),    // Value from RegFile (e.g., $ra)
         .s(jr_func)                 // Select if jr
     );
-
-
+    // ************** bex mux **************
+    /*
+        Selects between (previous result) AND (T)
+    */
+    wire isBex; // Defined in EX Stage
+    mux_2_1 bex_mux (
+        .out(pc_next),
+        .a(jr_mux_out),          // The PC value from the previous stages
+        .b(j_or_jal_target),     // The jump target T
+        .s(isBex)         // Select T if bex is taken
+    );
     // ************** Instruction Memory **************
-    /* 
-        Used 32-DFFEs to store each bit of the instruction.
+    /* Used 32-DFFEs to store each bit of the instruction.
     */ 
     genvar i;
     generate
@@ -191,7 +210,7 @@ module processor(
 
     // ++++++++++++++ PC -> Read Address ++++++++++++++
     assign address_imem = pc;
-
+    
     wire [31:0] instr;
     assign instr = q_imem;
 
@@ -219,19 +238,79 @@ module processor(
     assign immediate = instr[16:0];
     
     // ************** Sign Extended **************
-    /*
-        For calculating brach and the ALU in EX stage
-     */
     assign sign_extended = {{15{immediate[16]}}, immediate};
     
-    // ************** Branch Address ALU **************
-    /*
-        In the project because we are counting in words we don't 
-        need to left-shift by 2. Instead we have to use:
-            - branch_target = PC + 1 + SignExt(immed)   // Note that we already have the PC+1 as a variable
-            - jump_target   = immed
-     */
+    // ++++++++++++++ Decode J-type ++++++++++++++
+    // *** FIX: Correctly assign j_target_full from instr[26:0] and truncate ***
+    wire [26:0] j_target_full;
+    assign j_target_full = instr[26:0];          // Get 27-bit target
+    assign j_or_jal_target = j_target_full[11:0];  // Truncate to 12-bit PC
+    
+    
+    /* * -------------------------------------------------------------------------------------
+    * MOVED ALL DECODERS HERE (from EX Stage)
+    * This fixes the hazard where control signals were used before they were defined.
+    * ------------------------------------------------------------------------------------- 
+    */
  
+    // ++++++++++++++ R-Type Functions, the ([xxxxx]) ++++++++++++++
+    wire add_func, sub_func, and_func, or_func, sll_func, sra_func;
+    and add_check (add_func, ~alu_op[4], ~alu_op[3], ~alu_op[2], ~alu_op[1], ~alu_op[0]);
+    and sub_check (sub_func, ~alu_op[4], ~alu_op[3], ~alu_op[2], ~alu_op[1], alu_op[0]);
+    and and_check (and_func, ~alu_op[4], ~alu_op[3], ~alu_op[2], alu_op[1], ~alu_op[0]);
+    and or_check  (or_func,  ~alu_op[4], ~alu_op[3], ~alu_op[2], alu_op[1], alu_op[0]);
+    and sll_check (sll_func, ~alu_op[4], ~alu_op[3], alu_op[2], ~alu_op[1], ~alu_op[0]);
+    and sra_check (sra_func, ~alu_op[4], ~alu_op[3], alu_op[2], ~alu_op[1], alu_op[0]);
+
+    // ++++++++++++++ I-Type Instructions ++++++++++++++
+    wire r_type, addi_type, lw_type, sw_type;
+    and r_type_check (r_type, ~opcode[4], ~opcode[3], ~opcode[2], ~opcode[1], ~opcode[0]);  // r_type: 00000
+    and addi_check (addi_type, ~opcode[4], ~opcode[3], opcode[2], ~opcode[1], opcode[0]); // addi:   00101
+    and lw_check (lw_type, ~opcode[4], opcode[3], ~opcode[2], ~opcode[1], ~opcode[0]);   // lw:     01000
+    and sw_check (sw_type, ~opcode[4], ~opcode[3], opcode[2], opcode[1], opcode[0]);   // sw:     00111
+    
+    // ++++++++++++++ Branch Instructions ++++++++++++++
+    wire bne_func, blt_func;
+    and bne_check (bne_func, ~opcode[4], ~opcode[3], ~opcode[2], opcode[1], ~opcode[0]); // bne : 00010
+    and blt_check (blt_func, ~opcode[4], ~opcode[3], opcode[2], opcode[1], ~opcode[0]); // blt : 00110
+    
+    // ++++++++++++++ J-Type Instructions ++++++++++++++
+    wire j_func, jal_func, setx_func, bex_func; // jr_func defined earlier
+    and j_check (j_func, ~opcode[4], ~opcode[3], ~opcode[2], ~opcode[1], opcode[0]);    // j:    00001
+    and jal_check  (jal_func, ~opcode[4], ~opcode[3], ~opcode[2], opcode[1], opcode[0]); // jal:  00011
+    and jr_check (jr_func, ~opcode[4], ~opcode[3], opcode[2], ~opcode[1], ~opcode[0]);   // jr:   00100
+    and setx_check (setx_func, opcode[4], ~opcode[3], opcode[2], ~opcode[1], opcode[0]); // setx: 10101
+    and bex_check (bex_func, opcode[4], ~opcode[3], opcode[2], opcode[1], ~opcode[0]);   // bex:  10110
+
+    // ++++++++++++++ Main Decoder (Control Signals) ++++++++++++++
+    wire mem_read, mem_to_reg, mem_write, alu_src, reg_write;
+
+    assign reg_write = r_type | addi_type | lw_type;
+    assign mem_write = sw_type;
+    assign mem_read  = lw_type;
+    assign alu_src = addi_type | lw_type | sw_type;
+    assign mem_to_reg = lw_type;
+    or is_j_or_jal_or (is_j_or_jal, j_func, jal_func); // Used in IF stage MUX
+
+
+    // ++++++++++++++ Regfile Read Port Logic (NOW WORKS) ++++++++++++++
+    /* ctrl_readRegA = rs, except:
+        - bex: 30 ($rstatus)
+        - jr:  rd ($ra)
+       ctrl_readRegB = rt, except:
+        - sw:  rd
+        - bne: rd
+        - blt: rd
+    */
+    wire readA_is_rd = jr_func | blt_func;
+    assign ctrl_readRegA = bex_func ? 5'd30 : (readA_is_rd ? rd : rs);    
+
+    wire need_rd_for_B;
+    or readRegB_or (need_rd_for_B, sw_type, bne_func);
+    assign ctrl_readRegB = need_rd_for_B ? rd : (blt_func ? rs : rt);
+
+
+    // ************** Branch Address ALU **************
     alu leftshift_ALU (
         .data_operandA(pc_plus_1),
         .data_operandB(sign_extended),
@@ -242,100 +321,15 @@ module processor(
         .isLessThan(),
         .overflow()
     );
-    
-    // ++++++++++++++ Decode J-type ++++++++++++++
-    wire [26:0] j_target_full;
-    assign j_or_jal_target = instr[11:0]; 
-    
-    // ++++++++++++++ Decoder ++++++++++++++
-    /* -------------------------------------------------------------------------------------
-        NOTE: Decoder moved here so lw_tpye and sw_type exists before use.
-        These types are later used to determine what operation the ALU is going to execute.
-    ------------------------------------------------------------------------------------- */
-
-    wire mem_read, mem_to_reg, mem_write, alu_src, reg_write;
-    wire r_type, addi_type, lw_type, sw_type;
-    and r_type_check (r_type, ~opcode[4], ~opcode[3], ~opcode[2], ~opcode[1], ~opcode[0]);  // r_type: opcode == 00000
-    and addi_check (addi_type, ~opcode[4], ~opcode[3], opcode[2], ~opcode[1], opcode[0]); // addi: opcode == 00101
-    and lw_check (lw_type, ~opcode[4], opcode[3], ~opcode[2], ~opcode[1], ~opcode[0]);   // lw: opcode == 01000
-    and sw_check (sw_type, ~opcode[4], ~opcode[3], opcode[2], opcode[1], opcode[0]);   // sw: opcode == 00111
-
-    assign reg_write = r_type | addi_type | lw_type;
-    assign mem_write = sw_type;
-    assign mem_read  = lw_type;
-    assign alu_src = addi_type | lw_type | sw_type;
-    assign mem_to_reg = lw_type;
-    
-    /* ---------------------------------------------------------------------
-       IMPORTANT!
-       Regfile read ports:
-       ctrl_readRegA = rs
-       ctrl_readRegB = rd when sw (store) else rt
-       
-       *** FIX: Implement jr read from $rd (ctrl_readRegA) ***
-       *** FIX: Implement bne/blt read from $rd (ctrl_readRegB) ***
-       --------------------------------------------------------------------- */
-
-    // Need bne/blt func wires defined before use
-    wire bne_func, blt_func; // Defined in EX stage
-    
-    assign ctrl_readRegA = jr_func ? rd : rs; // Read $rd for jr, else $rs
-
-    wire need_rd_for_B;
-    or readRegB_or (need_rd_for_B, sw_type, bne_func, blt_func);
-    assign ctrl_readRegB = need_rd_for_B ? rd : rt; // Read $rd for sw, bne, blt
 
 
     /* ———————————————————————————————————————————————————— EX stage ———————————————————————————————————————————————————— */
-    /* --------------------------------------------------------------------- 
-        R-type
-        add $rd, $rs, $rt	    00000 (00000)
-        sub $rd, $rs, $rt	    00000 (00001)
-        and $rd, $rs, $rt	    00000 (00010)
-        or $rd, $rs, $rt	    00000 (00011)
-        sll $rd, $rs, shamt	    00000 (00100)
-        sra $rd, $rs, shamt	    00000 (00101)
-
-        I-type
-        addi $rd, $rs, N	    00101
-        sw $rd, N($rs)	        00111
-        lw $rd, N($rs)	        01000
-       --------------------------------------------------------------------- */
     
-    // R-Type , the ([xxxxx])
-    wire add_func, sub_func, and_func, or_func, sll_func, sra_func;
-    and add_check (add_func, ~alu_op[4], ~alu_op[3], ~alu_op[2], ~alu_op[1], ~alu_op[0]);
-    and sub_check (sub_func, ~alu_op[4], ~alu_op[3], ~alu_op[2], ~alu_op[1], alu_op[0]);
-    and and_check (and_func, ~alu_op[4], ~alu_op[3], ~alu_op[2], alu_op[1], ~alu_op[0]);
-    and or_check  (or_func,  ~alu_op[4], ~alu_op[3], ~alu_op[2], alu_op[1], alu_op[0]);
-    and sll_check (sll_func, ~alu_op[4], ~alu_op[3], alu_op[2], ~alu_op[1], ~alu_op[0]);
-    and sra_check (sra_func, ~alu_op[4], ~alu_op[3], alu_op[2], ~alu_op[1], alu_op[0]);
-    
-    // I-type
-    // wire bne_func, blt_func; // Moved up for ID stage
-    and bne_check (bne_func, ~opcode[4], ~opcode[3], ~opcode[2], opcode[1], ~opcode[0]); // bne : 00010
-    and blt_check (blt_func, ~opcode[4], ~opcode[3], opcode[2], opcode[1], ~opcode[0]); // blt : 00110
-    
-    // Check if it's a branch operation
-    /*
-        If it uses either the bne function or blt function that means its a branch function.
-        We may not need to branch, that is up to the isEqual or isLessThan.
-        However we still need to update the isBranch to allow branching if needed.
-    */
+    // ++++++++++++++ Check if it's a branch operation ++++++++++++++
     wire isBranch;
     or checkBranch (isBranch, bne_func, blt_func);
 
-    // J-type
-    wire j_func, jal_func; // jr_func moved up for IF/ID stage
-    and j_check (j_func, ~opcode[4], ~opcode[3], ~opcode[2], ~opcode[1], opcode[0]);        // j: opcode == 00001
-    and jal_check  (jal_func, ~opcode[4], ~opcode[3], ~opcode[2], opcode[1], opcode[0]); // jal: opcode == 00011
-    and jr_check (jr_func, ~opcode[4], ~opcode[3], opcode[2], ~opcode[1], ~opcode[0]);   // jr: opcode == 00100
-    
-    or is_j_or_jal_or (is_j_or_jal, j_func, jal_func); // Used in IF stage MUX
-
-    and setx_check (setx_func, opcode[4], ~opcode[3], opcode[2], ~opcode[1], opcode[0]); // setx: opcode == 10101
-
-    // Check which operation to use
+    // Check which operation to use for ALU
     wire add_op, sub_op, and_op, or_op, sll_op, sra_op;
     wire [4:0] alu_control;
     assign add_op = (r_type & add_func) | addi_type | lw_type | sw_type; // lw/sw need add for offset
@@ -354,10 +348,6 @@ module processor(
                          5'b00000;
                          
     // ************** ALU Src MUX **************
-    /*
-        MUX to calculate the source_b for the MAIN ALU
-    */
-
     wire [31:0] alu_src_b;
     mux_2_1 alu_src_mux (
         .out(alu_src_b),
@@ -381,37 +371,25 @@ module processor(
     );
     
     // Check if branching is required
-    /*
-        In the previous or module we calcualted whether we MAY have to branch.
-        Now we are determing if we NEED to branch.
-
-        REMEMBER to to use alu_isNotEqual 
-        since the circuit design uses BNE and NOT BEQ
-
-        BNE would want isNotEqual
-        BEQ would want ~isNotEqual
-    */
     wire confirm_branch;
-    
-    // Check if we NEED to branch
-    /*
-        isNotEqual * bne + isLessThan * blt
-        If either is true that means confirme branch, else no branch needed.
-        Cheaper than using a MUX by one INV
-    */
     wire branch_bne, branch_blt;
     and bne_and (branch_bne, alu_isNotEqual, bne_func);
     and blt_and (branch_blt, alu_isLessThan, blt_func);
-    or(confirm_branch, branch_bne, branch_blt);             // branch confirmation
-    and branch_and (pc_src, isBranch, confirm_branch);      // update PC_SRC
+    or(confirm_branch, branch_bne, branch_blt);
+    
+    and branch_and (pc_src, isBranch, confirm_branch); // update PC_SRC
 
 
+    // BEX condition check
+    wire rstatus_is_not_zero;
+    assign rstatus_is_not_zero = | data_readRegA; // OR-reduction (NOW WORKS)
+    
+    // isBex is used by PC Mux in IF stage
+    assign isBex = bex_func & rstatus_is_not_zero;
+
+    
     /* ---------------------------------------------------------------------
         Overflow / rstatus forwarding
-        $rd = $rs + $rt         $rstatus = 1 if overflow
-        $rd = $rs + N           $rstatus = 2 if overflow
-        $rd = $rs - $rt         $rstatus = 3 if overflow
-     
       --------------------------------------------------------------------- */
     wire r_add_overflow = r_type & add_func & alu_overflow;
     wire i_addi_overflow = addi_type & alu_overflow;
@@ -438,19 +416,6 @@ module processor(
 
     /* —————————————————————————— WB stage —————————————————————————— */
 
-    /*
-        ●	$r30 is the status register, also called $rstatus
-            ○	It may be set and overwritten like a normal register;
-                however, as indicated in the ISA, 
-                it can also be set when certain exceptions occur
-            ○	Exceptions take precedent when writing to $r30.
-                This means that any values written to $r30 
-                due to an exception will override values from regular instructions, 
-                ensuring that the status register reflects 
-                the system's critical states first and foremost.
-    */
-
-
     // Pick the data to write to register
     wire [31:0] mem_to_reg_data;
     mux_2_1 mem_to_reg_mux (
@@ -461,11 +426,6 @@ module processor(
     );
     
     /* Output Register (Priority top-down) [overflow > SETX > JAL > normal]
-        - Overflow case: write to register 30 (rstatus register for exception handling)
-        - SETX case: write to register 30 ($r30 = T)
-        - JAL case: write to register 31 ($ra)
-        - Normal case: write to destination register (rd)
-        NOTE: Exceptions take precedent when writing to $r30.
     */
     wire [4:0] final_write_reg;
 
@@ -475,20 +435,12 @@ module processor(
     
     /*
         Write Permission
-        - Normal instruction wants to write (reg_write == 1)
-        OR 
-        - when we have an overflow and need to write status to r30
-        OR
-        - when we have a jal and need to write PC+1 to $ra        
     */
     wire final_write_enable;
     or final_write_or (final_write_enable, reg_write, overflow_write_rstatus, jal_func, setx_func);
 
-    /* DO NOT FORGET THIS PART!
+    /*
         Check if we're trying to write to register 0
-        ●	$r0 should ALWAYS be zero
-            ○	Protip: make sure your bypass logic handles this
-        NOTE: NOR of all bits should be 1 since all bits are 0
     */
     wire final_is_reg0;
     assign final_is_reg0 = ~ ( | final_write_reg );
@@ -502,16 +454,15 @@ module processor(
     
     // ++++++++++++++ Choose the final data to write ++++++++++++++
     /*
-        If overflow, write rstatus. 
+        If overflow, write rstatus.
         Else if setx, write T. 
-        Else if jal, write PC+1. 
+        Else if jal, write PC+1.
         Else, write normal data.
     */
     wire [31:0] target;
-    assign target = {5'b0, instr[26:0]};       // Zero-extend T (instr[26:0]) to 32 bits
+    assign target = {5'b0, j_target_full}; // Zero-extend T (instr[26:0]) to 32 bits
     
     assign data_writeReg = overflow_write_rstatus ? rstatus :
-                           (setx_func ? target :
-                           (jal_func ? pc_alu_result : mem_to_reg_data));
-
+                        (setx_func ? target :
+                        (jal_func ? pc_plus_two_result : mem_to_reg_data));
 endmodule
