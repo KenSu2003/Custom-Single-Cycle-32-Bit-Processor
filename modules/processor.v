@@ -238,7 +238,7 @@ module processor(
         rd : sw , bne , blt
         rt : else
     --------------------------------------------------------------------- */
-    assign ctrl_readRegA = (bne_type | blt_type | jr_type) ? rd : rs;
+    assign ctrl_readRegA = (bne_type | blt_type | jr_type) ? rd : (bex_type ? 5'd30 : rs);
     assign ctrl_readRegB = (bne_type | blt_type) ? rs : (sw_type ? rd : rt);
 
     /* ——————————————————————————————————— End of ID ——————————————————————————————————— */

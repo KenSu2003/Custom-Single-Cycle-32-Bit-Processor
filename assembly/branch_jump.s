@@ -49,11 +49,11 @@ j    bex_not_taken_test
 
 # --- BEX (Not Taken Case) ---
 bex_not_taken_test:
-setx 0               # $rstatus ($r30) = 0
-addi $12, $0, -1     # NOT TAKEN PATH. $12 = -1 f(should later be changed to 1)
-addi $13, $0, 1     # $13 should remain 1
-bex  bex_fail_path   # Branch SHOULD NOT be taken (0 == 0)
-addi $12, $0, 1     # $12 = 1
+setx 0                  # $rstatus ($r30) = 0
+addi $12, $0, -1        # 12 = -1 f(should later be changed to 1)
+addi $13, $0, 1         # $13 should remain 1
+bex  bex_fail_path      # Branch SHOULD NOT be taken (0 == 0)
+addi $12, $0, 1         # $12 = 1
 j    done
 
 bex_fail_path:

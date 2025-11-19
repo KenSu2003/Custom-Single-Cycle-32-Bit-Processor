@@ -84,7 +84,7 @@ expected_reg[10]  = 32'h00000001;    // $10 = 1
 expected_reg[11]  = 32'h00000001;    // $11 = 1
 expected_reg[12]  = 32'h0000001;    // $12 = 1
 expected_reg[13]  = 32'h00000001;    // $13 = 1
-expected_reg[30] = 32'h0000007B;    // $rstatus = 123 (from setx 123)
+expected_reg[30] = 32'h00000000;    // $rstatus = 0 (from setx 0)
 expected_reg[31] = 32'h00000013;    // $ra = 19 (PC+1 from jal at PC=18)
 
 
