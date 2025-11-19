@@ -122,6 +122,7 @@ expected_reg[29] = 32'h000000C8; // 200 (BLT Taken)
 expected_reg[30] = 32'h00000000; // Cleared by setx 0
 expected_reg[31] = 32'h00000032; // 50 (Return Address from JAL = PC+1)
 
+expected_mem_arr[100] = 32'h0000000a;	// sw $1, 0($6) ; $1 = 10 , $6 = 100
 
 
 // extreme_test.s
@@ -158,7 +159,7 @@ expected_reg[29] = 32'h80000000;    // $29 = 1 << 31
 expected_reg[30] = 32'h00000002;    // $30 = rstatus final (addi overflow -> 2)
 expected_reg[31] = 32'h00000002;    // $31 = 2 (set by branch_bne_pass)
 
-expected_mem_arr[ 99] = 32'h00000007;    // MEM[$5 - 1]
+expected_mem_arr[99] = 32'h00000007;    // MEM[$5 - 1]
 expected_mem_arr[100] = 32'h00000007;    // MEM[$5 + 0]
 expected_mem_arr[101] = 32'h00000014;    // MEM[$5 + 1]
 expected_mem_arr[102] = 32'h0000000F;    // MEM[$5 + 2]
