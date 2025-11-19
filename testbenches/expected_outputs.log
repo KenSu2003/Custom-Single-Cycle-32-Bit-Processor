@@ -69,7 +69,7 @@ expected_reg[1]  = 32'h00000000;    // $1 = 0
 expected_reg[2]  = 32'h00000001;    // $2 = 1
 
 
-// branch_jump.s expected register values
+// ——————————————————————— branch_jump.s ———————————————————————
 expected_reg[0]  = 32'h00000000;
 expected_reg[1]  = 32'h00000005;    // $1 = 5
 expected_reg[2]  = 32'h00000005;    // $2 = 5
@@ -125,7 +125,7 @@ expected_reg[31] = 32'h00000032; // 50 (Return Address from JAL = PC+1)
 expected_mem_arr[100] = 32'h0000000a;	// sw $1, 0($6) ; $1 = 10 , $6 = 100
 
 
-// extreme_test.s
+// ——————————————————————— extreme_test.s ———————————————————————
 expected_reg[0]  = 32'h00000000; // Always 0
 expected_reg[1]  = 32'h0000000B; // 11 (Block K: Marker that bex jumped)
 expected_reg[2]  = 32'h00000002; // 2 (Block K: Inside CALLER_FUNC)
