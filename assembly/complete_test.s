@@ -144,15 +144,15 @@ j jal_jr_tests
 jal_jr_tests:
 addi $15, $0, 30        # Initialize $15
 jal subroutine_1        # Call subroutine
-addi $15, $15, 100      # $15 = 40 + 100 = 140 (Execute after JR)
+addi $15, $15, 100      # $15 = 31 + 100 = 131 (Execute after JR)
 j bex_tests
 
 subroutine_1:
-add $15, $15, $1        # $15 = 30 + 5 = 35
+add $15, $15, $1        # $15 = 30 + 1 = 31
 jr $31                  # Return to the instruction after JAL
 
 # EXPECTED: $31 = PC of "addi $15, $15, 100" + 1 (The correct return address)
-# EXPECTED: $15 = 135 (35 + 100)
+# EXPECTED: $15 = 131 (31 + 100)
 
 # =====================================================================
 # 7. BEX INSTRUCTION
@@ -195,4 +195,4 @@ setx 0
 # EXPECTED: $30 = 0x00000000
 
 done:
-j done # Loop endlessly
+nop

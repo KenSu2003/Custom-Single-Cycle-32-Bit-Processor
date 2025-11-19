@@ -89,7 +89,38 @@ expected_reg[31] = 32'h00000013;    // $ra = 19 (PC+1 from jal at PC=18)
 
 
 // complete_test.s
-
+expected_reg[0]  = 32'h00000000; // Always 0
+expected_reg[1]  = 32'h00000002; // Final value 2
+expected_reg[2]  = 32'h00000005; // Final value 5
+expected_reg[3]  = 32'h000000FF; // 255
+expected_reg[4]  = 32'h80000000; // Max Negative
+expected_reg[5]  = 32'h7FFFFFFF; // Max Positive
+expected_reg[6]  = 32'h00000064; // 100 (Base Address)
+expected_reg[7]  = 32'h00000000;
+expected_reg[8]  = 32'h00000000;
+expected_reg[9]  = 32'h00000000;
+expected_reg[10] = 32'h000007D0; // 2000 (BEX Taken Path)
+expected_reg[11] = 32'h00000BB8; // 3000 (BEX Not Taken Path)
+expected_reg[12] = 32'h00000000;
+expected_reg[13] = 32'h00000000;
+expected_reg[14] = 32'h00000000;
+expected_reg[15] = 32'h00000084; // 132 (Subroutine result)
+expected_reg[16] = 32'h0000000F; // 15 (10 + 5)
+expected_reg[17] = 32'h00000005; // 5 (10 - 5)
+expected_reg[18] = 32'h00000000; // 0 (10 & 5)
+expected_reg[19] = 32'h000000FF; // 255 (10 | 255)
+expected_reg[20] = 32'h00000028; // 40 (5 << 3)
+expected_reg[21] = 32'hC0000000; // SRA of 0x80000000 by 1
+expected_reg[22] = 32'h80000004; // Overflow Add result
+expected_reg[23] = 32'h0000006E; // 110 (10 + 100)
+expected_reg[24] = 32'h0000000A; // 10 (Loaded from Mem[100])
+expected_reg[25] = 32'h00000000; // 0 (Loaded from uninitialized Mem[104])
+expected_reg[26] = 32'h80000004; // Overflow Addi result
+expected_reg[27] = 32'h7FFFFFFB; // Overflow Sub result (Wraparound)
+expected_reg[28] = 32'h00000064; // 100 (BNE Not Taken)
+expected_reg[29] = 32'h000000C8; // 200 (BLT Taken)
+expected_reg[30] = 32'h00000000; // Cleared by setx 0
+expected_reg[31] = 32'h00000032; // 50 (Return Address from JAL = PC+1)
 
 
 
