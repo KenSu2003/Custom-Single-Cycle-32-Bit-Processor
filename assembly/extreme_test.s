@@ -111,7 +111,7 @@ addi $28, $0, 4          # marker for BLT path taken
 # --------------------
 
 # 1) Test setx + bex: set status, then bex should jump when rstatus != 0
-setx  0x0000002A         # $30 (rstatus) = 0x2A (42)  [setx takes a JI immediate; assembler should accept hex or decimal]
+setx  42         # $30 (rstatus) = 0x2A (42)  [setx takes a JI immediate; assembler should accept hex or decimal]
 bex   SKIP_BEX           # if rstatus != 0 then PC = SKIP_BEX
 # If bex fails, this addi will execute; it should be skipped
 addi  $1, $0, 99         # skipped if bex worked

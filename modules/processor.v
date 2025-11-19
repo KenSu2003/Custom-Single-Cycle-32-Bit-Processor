@@ -151,6 +151,21 @@ module processor(
         end
     endgenerate
 
+
+    wire [11:0] pc_plus_1_latched;
+    
+    generate
+        for (i = 0; i < 12; i = i + 1) begin : pc_latch_gen
+            dffe_ref pc_latch_dffe (
+                .q(pc_plus_1_latched[i]), // Output to use in EX stage
+                .d(pc_plus_1[i]),         // Input from current PC
+                .clk(clock),
+                .en(1'b1),
+                .clr(reset)
+            );
+        end
+    endgenerate
+
     /* ——————————————————————————————————— End of IF ——————————————————————————————————— */
 
 
@@ -460,7 +475,7 @@ module processor(
 
     // Choose the final data to write
     assign data_writeReg = setx_type ? {5'b0, target} : 
-                           jal_type ? {20'b0, pc_plus_1} : 
+                           jal_type ? {20'b0, pc_plus_1_latched} :
                            overflow_write_rstatus ? rstatus : 
                            mem_to_reg_data;
 
