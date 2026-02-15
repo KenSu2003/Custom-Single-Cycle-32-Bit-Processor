@@ -57,3 +57,9 @@ The Instruction Memory IP was generated with **UNREGISTERED** outputs (`q`) so t
 - ISA and project specification: "Checkpoint 5 - Full Processor.pdf"
 - 4-bit CLA design: Wikipedia
 - Single-cycle processor concepts: ECE 550 – Lecture 8, Slide 17
+
+---
+
+## Related
+
+This processor was used as the core for the system project [Pong-on-Assembly](https://github.com/KenSu2003/Pong-on-Assembly), which adds VGA, PS2 keyboard, and a Pong game in assembly.
